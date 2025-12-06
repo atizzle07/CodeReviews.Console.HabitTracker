@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Habit_Tracker_App": {
+      "commandName": "Project",
+      "workingDirectory": "C:\\Users\\tripp\\source\\repos\\TheCSharpAcademy\\ConsoleProjects\\Habit-Tracker\\"
+    }
+  }
+}
