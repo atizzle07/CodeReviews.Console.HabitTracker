@@ -9,6 +9,6 @@ namespace Habit_Tracker_App;
 internal class Habit
 {
     public int HabitId { get; set; }
-    public string? Date { get; set; }
+    public string Date { get; set; }
     public int Quantity { get; set; } 
 }

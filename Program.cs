@@ -66,23 +66,24 @@ public class Program
 
     static void ViewAllRecords()
     {
-        var tableData = GetAllRecords();
+        List<Habit> tableData = GetAllRecords();
 
         //Write results to console.
-        var recordsTable = new Table();
-        recordsTable.AddColumn("[bold orange3]ID[/]");
-        recordsTable.AddColumn("[bold orange3]Date[/]");
-        recordsTable.AddColumn("[bold orange3]Glasses Drank[/]");
+        var recordsTable = new Spectre.Console.Table();
+        recordsTable.AddColumn("[bold orange3]ID[/]")
+                    .AddColumn("[bold orange3]Date[/]")
+                    .AddColumn("[bold orange3]Glasses Drank[/]");
 
-        foreach (var row in tableData)
+        foreach (Habit row in tableData)
         {
-            recordsTable.AddRow(tableData[0], tableData[1], tableData[2]);
+            recordsTable = recordsTable.AddRow(row.HabitId.ToString(), row.Date, row.Quantity.ToString());
         }
-
+        AnsiConsole.Write(recordsTable);
     }
 
-    public static List<Habit> GetAllRecords()
+    static List<Habit> GetAllRecords()
     {
+        // This was moved out of ViewAllRecords method so it could also be used for record selection in other methods.
         List<Habit> tableData = new List<Habit>();
         try
         {
@@ -97,8 +98,8 @@ public class Program
 
                 if (reader.HasRows)
                 {
-                    tableData.Add(
-                        new Habit()
+                    tableData.Add( //EXCEPTION - "No data found for the specified row/column"
+                        new Habit
                         {
                             HabitId = reader.GetInt32(0),
                             Date = reader.GetString(1),
@@ -117,6 +118,7 @@ public class Program
         catch (Exception ex)
         {
             AnsiConsole.MarkupLine($"[bold red]An error occurred: {ex.Message}[/]");
+            return new List<Habit>();
         }
     }
 
@@ -147,8 +149,22 @@ public class Program
         while (exitLoop == false);
         //Save to database
             //IMPROVE - Need to add a check that views the users inputs and asks if they want to proceed or edit their inputs.
+            //IMPROVE - Need to add loop that asks user if they want to use their entries or enter new data
         try
         {
+            //string answer;
+            //do
+            //{
+                AnsiConsole.MarkupLine($"[bold orange3]You entered the following:[/]");
+                Console.WriteLine($"Date: {inputDate}");
+                Console.WriteLine($"Quantity: {inputQuantity}\n");
+                AnsiConsole.MarkupLine($"[bold orange3]Press enter to continue...[/]");
+                Console.Read();
+            //    AnsiConsole.MarkupLine($"[bold orange3]Do you want to continue (Y/N)? [/]");
+            //    answer = Console.ReadLine().ToLower();
+            //} while (answer != "y");
+            
+
             using (var conn = new SqliteConnection(connectionString))
             {
                 conn.Open();
@@ -158,7 +174,6 @@ public class Program
                 command.ExecuteNonQuery();
                 conn.Close();
             }
-
         }
         catch (Exception ex)
         {
@@ -169,6 +184,7 @@ public class Program
 
     private static string GetDate()
     {
+        // NOT WORKING - This does not cause an exception but allows 4 digits in the year column
         AnsiConsole.Markup("[green]Please enter the date of your entry (MM-DD-YYYY): [/]");
         string? input = Console.ReadLine();
 
@@ -181,7 +197,7 @@ public class Program
 
     private static int GetQuantity()
     {
-        AnsiConsole.Write("[green]Please enter whole number of glasses to log [/]");
+        AnsiConsole.Markup("[green]Please enter whole number of glasses to log [/]");
         if (int.TryParse(Console.ReadLine(), out int quantity))
             return quantity;
         else
