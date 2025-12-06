@@ -26,24 +26,30 @@ public class Program
             case "1": // Add entry
                 AnsiConsole.MarkupLine("[bold red]You reached the Add entry Method![/]");
                 InsertRecord();
+                Console.ReadLine();
                 break;
             case "2": // View saved entries
                 AnsiConsole.MarkupLine("[bold red]You reached the View saved entries Method![/]");
                 ViewAllRecords();
+                Console.ReadLine();
                 break;
             case "3": // Update an entry
                 AnsiConsole.MarkupLine("[bold red]You reached the Update entry Method![/]");
                 UpdateRecord();
+                Console.ReadLine();
                 break;
             case "4": // Delete an entry
                 AnsiConsole.MarkupLine("[bold red]You reached the Delete entry Method![/]");
                 DeleteRecord();
+                Console.ReadLine();
                 break;
             case "x": // Exit application
                 AnsiConsole.MarkupLine("[bold red]You reached the Exit application Method![/]");
+                Console.ReadLine();
                 break;
             default:
                 AnsiConsole.MarkupLine("[bold red]Error - Invalid entry[/]");
+                Console.ReadLine();
                 break;
         } 
     }
@@ -58,9 +64,60 @@ public class Program
         throw new NotImplementedException();
     }
 
-    private static void ViewAllRecords()
+    static void ViewAllRecords()
     {
-        throw new NotImplementedException();
+        var tableData = GetAllRecords();
+
+        //Write results to console.
+        var recordsTable = new Table();
+        recordsTable.AddColumn("[bold orange3]ID[/]");
+        recordsTable.AddColumn("[bold orange3]Date[/]");
+        recordsTable.AddColumn("[bold orange3]Glasses Drank[/]");
+
+        foreach (var row in tableData)
+        {
+            recordsTable.AddRow(tableData[0], tableData[1], tableData[2]);
+        }
+
+    }
+
+    public static List<Habit> GetAllRecords()
+    {
+        List<Habit> tableData = new List<Habit>();
+        try
+        {
+            using (var conn = new SqliteConnection(connectionString))
+            {
+                conn.Open();
+                var command = conn.CreateCommand();
+                command.CommandText = @$"SELECT * FROM {tableName}";
+                command.ExecuteNonQuery();
+
+                SqliteDataReader reader = command.ExecuteReader();
+
+                if (reader.HasRows)
+                {
+                    tableData.Add(
+                        new Habit()
+                        {
+                            HabitId = reader.GetInt32(0),
+                            Date = reader.GetString(1),
+                            Quantity = reader.GetInt32(2)
+                        });
+                }
+                else
+                {
+                    AnsiConsole.MarkupLine($"[bold red]No records found[/]");
+                    Console.ReadLine();
+                }
+                conn.Close();
+                return tableData;
+            }
+        }
+        catch (Exception ex)
+        {
+            AnsiConsole.MarkupLine($"[bold red]An error occurred: {ex.Message}[/]");
+        }
     }
 
     private static void InsertRecord()
