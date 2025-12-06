@@ -6,9 +6,8 @@ using System.Text;
 
 namespace Habit_Tracker_App;
 
-public class ConsoleUI
+public class MenuUI
 {
-
     public static void WelcomeMessage()
     {
         AnsiConsole.MarkupLine("[bold orange3]Welcome to the Habit Tracker Application![/]\n");

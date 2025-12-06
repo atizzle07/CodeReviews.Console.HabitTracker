@@ -1,13 +1,16 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
+using System.Net.NetworkInformation;
 using System.Text;
 
 namespace Habit_Tracker_App;
 
 public class DataConnection
 {
-    string connectionString = "Data Source=Habit-Tracker.db";
+    static string databaseName = "Habit-Tracker";
+    string tableName = "drinking_water";
+    static string connectionString = $"Data Source={databaseName}.db";
     public DataConnection()
     {
         CreateTable();
@@ -16,12 +19,14 @@ public class DataConnection
     public void CreateTable()
     {
         
-        using (var connection = new SqliteConnection(connectionString))
-        {
-            connection.Open();
-            var tableCmd = connection.CreateCommand();
 
-            tableCmd.CommandText = @"CREATE TABLE IF NOT EXISTS drinking_water (
+
+        using (var conn = new SqliteConnection(connectionString))
+        {
+            conn.Open();
+            var tableCmd = conn.CreateCommand();
+
+            tableCmd.CommandText = @$"CREATE TABLE IF NOT EXISTS {tableName}(
                                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 Date TEXT,
                                 Quantity INTEGER
@@ -29,7 +34,7 @@ public class DataConnection
 
             tableCmd.ExecuteNonQuery();
 
-            connection.Close();
+            conn.Close();
         }
     }
 }
