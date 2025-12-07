@@ -171,7 +171,7 @@ public class Program
             return new List<Habit>();
         }
     }
-    private static List<Habit> GetSingleRecord(int ID) //IMPROVE - Could create overload function with GetAllRecords if no parameters passed
+    private static void GetSingleRecord(int ID) //IMPROVE - Could create overload function with GetAllRecords if no parameters passed
     {
         List<Habit> tableData = new();
         try
@@ -203,13 +203,11 @@ public class Program
                     }
                 }
                 conn.Close();
-                return tableData;
             }
         }
         catch (Exception ex)
         {
             AnsiConsole.MarkupLine($"[bold red]An error occurred: {ex.Message}[/]");
-            return new List<Habit>();
         }
     }
     private static void InsertRecord()
