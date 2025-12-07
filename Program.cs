@@ -7,23 +7,23 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 
 namespace Habit_Tracker_App;
-public class Program
+public class Program 
 {
     static string databaseName = "Habit-Tracker";
     static string tableName = "drinking_water";
     static string connectionString = $"Data Source={databaseName}.db";
     DataConnection conn = new();
-    static void Main(string[] args)
+    static void Main(string[] args) 
     {
         string userChoice = "";
         MenuUI.WelcomeMessage();
 
-        while (userChoice != "x")
+        while (userChoice != "x") 
         {
             userChoice = MenuUI.GetMenuChoice();
             MenuUI.AddSpace(3);
 
-            switch (userChoice)
+            switch (userChoice) 
             {
                 case "1": // Add entry
                     InsertRecord();
@@ -53,22 +53,43 @@ public class Program
         }
     }
 
-    private static void DeleteRecord()
+    private static void DeleteRecord() 
     {
         AnsiConsole.MarkupLine("[bold red]**Under Construction**[/] This feature is not ready yet. Please make another selection");
+
+        List<Habit> recordsTable = GetAllRecords();
+        List<int> validRecord = new();
+        foreach (Habit record in recordsTable) 
+        {
+            validRecord.Add(record.HabitId);
+        }
         ViewAllRecords();
 
         string input;
-        do
-        {
+        int validInput;
+        bool exitLoop = false;
+        int rowCount;
+        do {
             AnsiConsole.Markup("[bold orange3]Please select the ID of the record you would like to delete: [/]");
             input = Console.ReadLine();
 
-            int.TryParse(input, out int validInput);
+            if (!int.TryParse(input, out validInput) || !validRecord.Contains(validInput))
+                AnsiConsole.MarkupLine("[bold red]Error - Invalid entry[/]");
+            else
+                exitLoop = true;
         }
-        while (true);
-        
+        while (exitLoop == false);
 
+        using (var conn = new SqliteConnection(connectionString))
+        {
+            conn.Open();
+            var command = conn.CreateCommand();
+            command.CommandText = @$"DELETE FROM {tableName}
+                                     WHERE Id = {validInput}";
+            rowCount = command.ExecuteNonQuery();
+            conn.Close();
+        }
+        AnsiConsole.Markup($"[bold orange3]You Deleted {rowCount} Row(s).[/]");
     }
 
     private static void UpdateRecord()
@@ -76,7 +97,7 @@ public class Program
         AnsiConsole.MarkupLine("[bold red]**Under Construction**[/] This feature is not ready yet. Please make another selection");
     }
 
-    static void ViewAllRecords()
+    private static void ViewAllRecords()
     {
         List<Habit> tableData = GetAllRecords();
 
@@ -95,7 +116,7 @@ public class Program
         AnsiConsole.MarkupLine("[bold orange3]Press Enter to continue...[/]");
     }
 
-    static List<Habit> GetAllRecords()
+    private static List<Habit> GetAllRecords()
     {
         // This was moved out of ViewAllRecords method so it could also be used for record selection in other methods.
         List<Habit> tableData = new List<Habit>();
@@ -194,18 +215,18 @@ public class Program
 
     private static string GetDate()
     {
-        // NOT WORKING - This does not cause an exception but allows 4 digits in the year column
+        // NOT WORKING - This does not cause an exception but allows 2 digits in the year column
         AnsiConsole.Markup("[green]Please enter the date of your entry (MM-DD-YYYY): [/]");
         string? input = Console.ReadLine();
 
-        if (Regex.IsMatch(input, @"\d{1,2}-\d{1,2}-\d{2}"))
+        if (Regex.IsMatch(input, @"\d{2}-\d{2}-\d{4}"))
             return input;
         else
             AnsiConsole.MarkupLine("[bold red]Invalid Input. Please try again[/]");
         return "";
     }
 
-    private static int GetQuantity()
+    private static int GetQuantity() 
     {
         AnsiConsole.Markup("[green]Please enter whole number of glasses to log [/]");
         if (int.TryParse(Console.ReadLine(), out int quantity))
