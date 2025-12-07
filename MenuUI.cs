@@ -6,12 +6,12 @@ using System.Text;
 
 namespace Habit_Tracker_App;
 
-public class MenuUI
+public static class MenuUI
 {
     public static void WelcomeMessage()
     {
         AnsiConsole.MarkupLine("[bold orange3]Welcome to the Habit Tracker Application![/]\n");
-        AnsiConsole.MarkupLine("[bold orange3]In this application you will manage the drinking water habit. To Continue, please press any key then Enter... [/]");
+        AnsiConsole.MarkupLine("[bold orange3]In this application you will manage the drinking water habit. To Continue, please press Enter... [/]");
         Console.ReadKey();
     }
 
@@ -43,9 +43,16 @@ public class MenuUI
                 case "x":
                     return userInput;
                 default:
-                    AnsiConsole.WriteLine("[red]Invalid entry. Please type a [/][green]menu choice[/]");
+                    AnsiConsole.MarkupLine("[red]Invalid entry. Please type a [/][green]menu choice[/]");
                     break;
             }
+        }
+    }
+    public static void AddSpace(int number)
+    {
+        for (int i = 0; i < number; i++)
+        {
+            Console.WriteLine();
         }
     }
 }

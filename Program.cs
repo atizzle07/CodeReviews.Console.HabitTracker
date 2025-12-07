@@ -15,53 +15,65 @@ public class Program
     DataConnection conn = new();
     static void Main(string[] args)
     {
-        
-        string userChoice;
-
+        string userChoice = "";
         MenuUI.WelcomeMessage();
-        userChoice = MenuUI.GetMenuChoice();
 
-        switch (userChoice)
+        while (userChoice != "x")
         {
-            case "1": // Add entry
-                AnsiConsole.MarkupLine("[bold red]You reached the Add entry Method![/]");
-                InsertRecord();
-                Console.ReadLine();
-                break;
-            case "2": // View saved entries
-                AnsiConsole.MarkupLine("[bold red]You reached the View saved entries Method![/]");
-                ViewAllRecords();
-                Console.ReadLine();
-                break;
-            case "3": // Update an entry
-                AnsiConsole.MarkupLine("[bold red]You reached the Update entry Method![/]");
-                UpdateRecord();
-                Console.ReadLine();
-                break;
-            case "4": // Delete an entry
-                AnsiConsole.MarkupLine("[bold red]You reached the Delete entry Method![/]");
-                DeleteRecord();
-                Console.ReadLine();
-                break;
-            case "x": // Exit application
-                AnsiConsole.MarkupLine("[bold red]You reached the Exit application Method![/]");
-                Console.ReadLine();
-                break;
-            default:
-                AnsiConsole.MarkupLine("[bold red]Error - Invalid entry[/]");
-                Console.ReadLine();
-                break;
-        } 
+            userChoice = MenuUI.GetMenuChoice();
+            MenuUI.AddSpace(3);
+
+            switch (userChoice)
+            {
+                case "1": // Add entry
+                    InsertRecord();
+                    Console.ReadLine();
+                    break;
+                case "2": // View saved entries
+                    ViewAllRecords();
+                    Console.ReadKey();
+                    break;
+                case "3": // Update an entry
+                    UpdateRecord();
+                    Console.ReadKey();
+                    break;
+                case "4": // Delete an entry
+                    DeleteRecord();
+                    Console.ReadKey();
+                    break;
+                case "x": // Exit application
+                    AnsiConsole.MarkupLine("[bold red]You reached the Exit application Method! Press Enter to exit...[/]");
+                    Console.ReadKey();
+                    break;
+                default:
+                    AnsiConsole.MarkupLine("[bold red]Error - Invalid entry[/]");
+                    Console.ReadKey();
+                    break;
+            }
+        }
     }
 
     private static void DeleteRecord()
     {
-        throw new NotImplementedException();
+        AnsiConsole.MarkupLine("[bold red]**Under Construction**[/] This feature is not ready yet. Please make another selection");
+        ViewAllRecords();
+
+        string input;
+        do
+        {
+            AnsiConsole.Markup("[bold orange3]Please select the ID of the record you would like to delete: [/]");
+            input = Console.ReadLine();
+
+            int.TryParse(input, out int validInput);
+        }
+        while (true);
+        
+
     }
 
     private static void UpdateRecord()
     {
-        throw new NotImplementedException();
+        AnsiConsole.MarkupLine("[bold red]**Under Construction**[/] This feature is not ready yet. Please make another selection");
     }
 
     static void ViewAllRecords()
@@ -79,6 +91,8 @@ public class Program
             recordsTable = recordsTable.AddRow(row.HabitId.ToString(), row.Date, row.Quantity.ToString());
         }
         AnsiConsole.Write(recordsTable);
+
+        AnsiConsole.MarkupLine("[bold orange3]Press Enter to continue...[/]");
     }
 
     static List<Habit> GetAllRecords()
@@ -91,25 +105,27 @@ public class Program
             {
                 conn.Open();
                 var command = conn.CreateCommand();
-                command.CommandText = @$"SELECT * FROM {tableName}";
-                command.ExecuteNonQuery();
+                command.CommandText = @$"SELECT Id, Date, Quantity FROM {tableName}";
 
-                SqliteDataReader reader = command.ExecuteReader();
-
-                if (reader.HasRows)
+                using (SqliteDataReader reader = command.ExecuteReader())
                 {
-                    tableData.Add( //EXCEPTION - "No data found for the specified row/column"
-                        new Habit
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
                         {
-                            HabitId = reader.GetInt32(0),
-                            Date = reader.GetString(1),
-                            Quantity = reader.GetInt32(2)
-                        });
-                }
-                else
-                {
-                    AnsiConsole.MarkupLine($"[bold red]No records found[/]");
-                    Console.ReadLine();
+                            tableData.Add(new Habit
+                            {
+                                HabitId = reader.GetInt32(0),
+                                Date = reader.GetString(1),
+                                Quantity = reader.GetInt32(2)
+                            });
+                        }
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine($"[bold red]No records found[/]");
+                        Console.ReadLine();
+                    }
                 }
                 conn.Close();
                 return tableData;
@@ -152,19 +168,6 @@ public class Program
             //IMPROVE - Need to add loop that asks user if they want to use their entries or enter new data
         try
         {
-            //string answer;
-            //do
-            //{
-                AnsiConsole.MarkupLine($"[bold orange3]You entered the following:[/]");
-                Console.WriteLine($"Date: {inputDate}");
-                Console.WriteLine($"Quantity: {inputQuantity}\n");
-                AnsiConsole.MarkupLine($"[bold orange3]Press enter to continue...[/]");
-                Console.Read();
-            //    AnsiConsole.MarkupLine($"[bold orange3]Do you want to continue (Y/N)? [/]");
-            //    answer = Console.ReadLine().ToLower();
-            //} while (answer != "y");
-            
-
             using (var conn = new SqliteConnection(connectionString))
             {
                 conn.Open();
@@ -174,6 +177,13 @@ public class Program
                 command.ExecuteNonQuery();
                 conn.Close();
             }
+            AnsiConsole.MarkupLine("[bold orange3]Record Saved![/]");
+            AnsiConsole.MarkupLine("[bold orange3]Details:[/]");
+            AnsiConsole.MarkupLine($"[bold orange3]Date: [/]{inputDate}");
+            AnsiConsole.MarkupLine($"[bold orange3]Quantity: [/]{inputQuantity}");
+            AnsiConsole.MarkupLine($"[bold orange3]Date: [/]{inputDate}");
+
+            AnsiConsole.MarkupLine("[bold orange3]Press Enter to continue...[/]");
         }
         catch (Exception ex)
         {
