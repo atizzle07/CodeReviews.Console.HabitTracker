@@ -78,7 +78,7 @@ public class Program
 
         //Prompt and return valid record ID
         int idSelection = GetValidRecordID();
-        List<Habit> record = GetSingleRecord(idSelection);
+        GetSingleRecord(idSelection);
 
         //Get valid date entry
         do
