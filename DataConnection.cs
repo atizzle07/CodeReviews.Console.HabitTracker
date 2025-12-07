@@ -1,8 +1,4 @@
 ﻿using Microsoft.Data.Sqlite;
-using System;
-using System.Collections.Generic;
-using System.Net.NetworkInformation;
-using System.Text;
 
 namespace Habit_Tracker_App;
 
@@ -15,12 +11,8 @@ public class DataConnection
     {
         CreateTable();
     }
-
     public void CreateTable()
     {
-        
-
-
         using (var conn = new SqliteConnection(connectionString))
         {
             conn.Open();
@@ -33,7 +25,6 @@ public class DataConnection
                                 )";
 
             tableCmd.ExecuteNonQuery();
-
             conn.Close();
         }
     }
