@@ -1,9 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
 using Spectre.Console;
-using Spectre.Console.Rendering;
-using System.Globalization;
-using System.Reflection.Metadata.Ecma335;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 
 namespace Habit_Tracker_App;
@@ -18,6 +14,7 @@ public class Program
         string userChoice = "";
         MenuUI.WelcomeMessage();
 
+        // Main Loop
         while (userChoice != "x") 
         {
             userChoice = MenuUI.GetMenuChoice();
@@ -31,18 +28,21 @@ public class Program
                     break;
                 case "2": // View saved entries
                     ViewAllRecords();
+                    AnsiConsole.MarkupLine("[bold orange3]Press Enter to continue...[/]");
                     Console.ReadKey();
                     break;
                 case "3": // Update an entry
                     UpdateRecord();
+                    AnsiConsole.MarkupLine("[bold orange3]Press Enter to continue...[/]");
                     Console.ReadKey();
                     break;
                 case "4": // Delete an entry
                     DeleteRecord();
+                    AnsiConsole.MarkupLine("[bold orange3]Press Enter to continue...[/]");
                     Console.ReadKey();
                     break;
                 case "x": // Exit application
-                    AnsiConsole.MarkupLine("[bold red]You reached the Exit application Method! Press Enter to exit...[/]");
+                    AnsiConsole.MarkupLine("[bold red]Press Enter to exit...[/]");
                     Console.ReadKey();
                     break;
                 default:
@@ -55,26 +55,48 @@ public class Program
 
     private static void DeleteRecord() 
     {
-        AnsiConsole.MarkupLine("[bold red]**Under Construction**[/] This feature is not ready yet. Please make another selection");
-
-        List<Habit> recordsTable = GetAllRecords();
-        List<int> validRecord = new();
-        foreach (Habit record in recordsTable) 
-        {
-            validRecord.Add(record.HabitId);
-        }
-        ViewAllRecords();
-
-        string input;
-        int validInput;
-        bool exitLoop = false;
+        int idSelection = GetValidRecordID();
         int rowCount;
-        do {
-            AnsiConsole.Markup("[bold orange3]Please select the ID of the record you would like to delete: [/]");
-            input = Console.ReadLine();
 
-            if (!int.TryParse(input, out validInput) || !validRecord.Contains(validInput))
-                AnsiConsole.MarkupLine("[bold red]Error - Invalid entry[/]");
+        using (var conn = new SqliteConnection(connectionString))
+        {
+            conn.Open();
+            var command = conn.CreateCommand();
+            command.CommandText = @$"DELETE FROM {tableName}
+                                     WHERE Id = '{idSelection}'";
+            rowCount = command.ExecuteNonQuery();
+            conn.Close();
+        }
+        AnsiConsole.Markup($"[bold orange3]You Deleted {rowCount} Row(s).[/]");
+    }
+    private static void UpdateRecord()
+    {
+        string inputDate;
+        int inputQuantity;
+        int rowsAffected;
+        bool exitLoop = false;
+
+        //Prompt and return valid record ID
+        int idSelection = GetValidRecordID();
+        List<Habit> record = GetSingleRecord(idSelection);
+
+        //Get valid date entry
+        do
+        {
+            inputDate = GetDate();
+            if (inputDate == "")
+                continue;
+            else
+                exitLoop = true;
+        }
+        while (exitLoop == false);
+
+        //Get valid quantity entry
+        do
+        {
+            inputQuantity = GetQuantity();
+            if (inputQuantity == 0)
+                continue;
             else
                 exitLoop = true;
         }
@@ -84,24 +106,18 @@ public class Program
         {
             conn.Open();
             var command = conn.CreateCommand();
-            command.CommandText = @$"DELETE FROM {tableName}
-                                     WHERE Id = {validInput}";
-            rowCount = command.ExecuteNonQuery();
+            command.CommandText = @$"UPDATE {tableName}
+                                     SET Date = '{inputDate}', Quantity = '{inputQuantity}'
+                                     WHERE Id = '{idSelection}'";
+            rowsAffected = command.ExecuteNonQuery();
             conn.Close();
         }
-        AnsiConsole.Markup($"[bold orange3]You Deleted {rowCount} Row(s).[/]");
+        AnsiConsole.Markup($"[bold orange3]{rowsAffected} record updated.[/]");
     }
-
-    private static void UpdateRecord()
-    {
-        AnsiConsole.MarkupLine("[bold red]**Under Construction**[/] This feature is not ready yet. Please make another selection");
-    }
-
     private static void ViewAllRecords()
     {
         List<Habit> tableData = GetAllRecords();
 
-        //Write results to console.
         var recordsTable = new Spectre.Console.Table();
         recordsTable.AddColumn("[bold orange3]ID[/]")
                     .AddColumn("[bold orange3]Date[/]")
@@ -112,10 +128,7 @@ public class Program
             recordsTable = recordsTable.AddRow(row.HabitId.ToString(), row.Date, row.Quantity.ToString());
         }
         AnsiConsole.Write(recordsTable);
-
-        AnsiConsole.MarkupLine("[bold orange3]Press Enter to continue...[/]");
     }
-
     private static List<Habit> GetAllRecords()
     {
         // This was moved out of ViewAllRecords method so it could also be used for record selection in other methods.
@@ -158,7 +171,47 @@ public class Program
             return new List<Habit>();
         }
     }
-
+    private static List<Habit> GetSingleRecord(int ID) //IMPROVE - Could create overload function with GetAllRecords if no parameters passed
+    {
+        List<Habit> tableData = new();
+        try
+        {
+            using (var conn = new SqliteConnection(connectionString))
+            {
+                conn.Open();
+                var command = conn.CreateCommand();
+                command.CommandText = @$"SELECT Id, Date, Quantity FROM {tableName}
+                                         WHERE Id = {ID}";
+                using (SqliteDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            tableData.Add(new Habit
+                            {
+                                HabitId = reader.GetInt32(0),
+                                Date = reader.GetString(1),
+                                Quantity = reader.GetInt32(2)
+                            });
+                        }
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine($"[bold red]No records found[/]");
+                        Console.ReadLine();
+                    }
+                }
+                conn.Close();
+                return tableData;
+            }
+        }
+        catch (Exception ex)
+        {
+            AnsiConsole.MarkupLine($"[bold red]An error occurred: {ex.Message}[/]");
+            return new List<Habit>();
+        }
+    }
     private static void InsertRecord()
     {
         string inputDate;
@@ -175,6 +228,7 @@ public class Program
         }
         while (exitLoop == false);
         //Get valid quantity entry
+        
         do
         {
             inputQuantity = GetQuantity();
@@ -184,9 +238,8 @@ public class Program
                 exitLoop = true;
         }
         while (exitLoop == false);
+
         //Save to database
-            //IMPROVE - Need to add a check that views the users inputs and asks if they want to proceed or edit their inputs.
-            //IMPROVE - Need to add loop that asks user if they want to use their entries or enter new data
         try
         {
             using (var conn = new SqliteConnection(connectionString))
@@ -203,19 +256,14 @@ public class Program
             AnsiConsole.MarkupLine($"[bold orange3]Date: [/]{inputDate}");
             AnsiConsole.MarkupLine($"[bold orange3]Quantity: [/]{inputQuantity}");
             AnsiConsole.MarkupLine($"[bold orange3]Date: [/]{inputDate}");
-
-            AnsiConsole.MarkupLine("[bold orange3]Press Enter to continue...[/]");
         }
         catch (Exception ex)
         {
             AnsiConsole.MarkupLine($"[bold red]An error occurred: {ex.Message}[/]");
         }
-        
     }
-
     private static string GetDate()
     {
-        // NOT WORKING - This does not cause an exception but allows 2 digits in the year column
         AnsiConsole.Markup("[green]Please enter the date of your entry (MM-DD-YYYY): [/]");
         string? input = Console.ReadLine();
 
@@ -225,14 +273,44 @@ public class Program
             AnsiConsole.MarkupLine("[bold red]Invalid Input. Please try again[/]");
         return "";
     }
-
     private static int GetQuantity() 
     {
         AnsiConsole.Markup("[green]Please enter whole number of glasses to log [/]");
-        if (int.TryParse(Console.ReadLine(), out int quantity))
-            return quantity;
-        else
+        int quantity;
+
+        while(!int.TryParse(Console.ReadLine(), out quantity))
+        {
             AnsiConsole.MarkupLine("[bold red]Invalid Input. Please try again[/]");
-            return 0;
+        }
+        return quantity;
     }
+    private static int GetValidRecordID()
+        {
+            // Retrieve all record ID's from DB
+            List<Habit> recordsTable = GetAllRecords();
+            List<int> validRecord = new();
+            foreach (Habit record in recordsTable)
+            {
+                validRecord.Add(record.HabitId);
+            }
+            ViewAllRecords();
+
+            string input;
+            int validInput;
+            bool exitLoop = false;
+            
+            // Validate selection to current record ID's
+            do
+            {
+                AnsiConsole.Markup("[bold orange3]Please select the ID of the record: [/]");
+                input = Console.ReadLine();
+
+                if (!int.TryParse(input, out validInput) || !validRecord.Contains(validInput))
+                    AnsiConsole.MarkupLine("[bold red]Error - Invalid entry[/]");
+                else
+                    exitLoop = true;
+            }
+            while (exitLoop == false);
+            return validInput;
+        }
 }

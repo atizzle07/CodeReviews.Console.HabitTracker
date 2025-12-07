@@ -1,11 +1,6 @@
-﻿using Habit_Tracker_App;
-using Spectre.Console;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Spectre.Console;
 
 namespace Habit_Tracker_App;
-
 public static class MenuUI
 {
     public static void WelcomeMessage()
@@ -14,7 +9,6 @@ public static class MenuUI
         AnsiConsole.MarkupLine("[bold orange3]In this application you will manage the drinking water habit. To Continue, please press Enter... [/]");
         Console.ReadKey();
     }
-
     public static string GetMenuChoice()
     {
         Console.Clear();
